@@ -5,6 +5,7 @@ from apps.db.schemas.post import PostResponse, PostBase
 from apps.db.models.post import Post as PostModel
 from apps.auth.authentication import get_current_user
 from apps.db.models.crud_routines.crud import CRUDBase
+from apps.db.schemas.user import UserBase
 
 router = APIRouter()
 

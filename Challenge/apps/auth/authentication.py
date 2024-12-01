@@ -21,7 +21,7 @@ def authenticate_user(user_credentials: OAuth2PasswordRequestForm, db_session: S
         return False
     return user
 
-async def get_current_user(token: str = Depends(oauth2_scheme),  db_session: Session = Depends(get_db_session)):
+async def get_current_user(token: str = Depends(oauth2_scheme),  db_session: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas o vencidas",
         headers={"WWW-Authenticate": "Bearer"},
@@ -36,8 +36,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme),  db_session: Ses
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario inactivo")
     return user
 
-@router.post('/login', response_model=schemas.Token)
-def login(form_user_credentials: OAuth2PasswordRequestForm = Depends(), db_session: Session = Depends(get_db_session)):
+@router.post('/login', response_model=schemas.token.Token)
+def login(form_user_credentials: OAuth2PasswordRequestForm = Depends(), db_session: Session = Depends(get_db)):
     user =  authenticate_user(form_user_credentials, db_session)
     if not user:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, 'Usuario o contraseña incorrectos')

@@ -5,6 +5,7 @@ from apps.db.schemas.tags import TagResponse, TagBase
 from apps.db.models.tags import Tag as TagModel
 from apps.auth.authentication import get_current_user
 from apps.db.models.crud_routines.crud import CRUDBase
+from apps.db.schemas.user import UserBase
 
 router = APIRouter()
 

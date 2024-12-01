@@ -13,10 +13,10 @@ from .auth.authentication import router as AuthRouter
 from .routes.users import router as UserRouter
 from .routes.posts import router as PostRouter
 from .routes.tags import router as TagsRouter
-from .db.db import config_db
+from .db.db import init_db
 
 from .utils.exceptions import CustomException
-from ..apps.middleware import ResponseTimeMiddleware
+from .middleware import ResponseTimeMiddleware
 
 _logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ app.include_router(TagsRouter, prefix=URL_PREFIX + "/tags", tags=["Comentarios"]
 @app.on_event('startup')
 def on_start():
     _logger.info('INFO:    !!Starting Service!!')
-    config_db()
+    init_db()
 
 
 @app.on_event('shutdown')

@@ -1,15 +1,15 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Table
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Session
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.database import Base
-from app.mixins import SoftDeleteMixin, TimestampMixin
+from apps.db.db import Base
+from apps.mixins import SoftDeleteMixin, TimestampMixin
 
 class User(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
-    age= Column(int, index= True)
-    email= Column(str, unique=True,index=True)
+    age= Column(Integer, index= True)
+    email= Column(String, unique=True,index=True)
     posts = relationship("Post", back_populates="owner")
     
     

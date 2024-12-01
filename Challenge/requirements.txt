@@ -3,8 +3,11 @@ uvicorn
 sqlalchemy
 asyncpg
 pydantic
+pydantic[email]
 passlib[bcrypt]
 alembic
 python-jose[cryptography]
 pyjwt
-decouple
+python-decouple
+sqlalchemy_utils
+psycopg2==2.9.9   
