@@ -1,32 +1,13 @@
 __version__ = "1.0.0"
-
 import logging
-from datetime import timedelta
-from http.client import HTTPException
-from typing import Union
-
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from passlib.context import CryptContext
-
 from apps.config import APP_NAME, URL_PREFIX, allowed_origins, allow_origin_regex
-from fastapi import FastAPI, Request, status, Depends
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware import Middleware
-from fastapi.openapi.docs import (get_redoc_html, get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html)
-from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI
 
-# # from .auth.authentication import authenticate_user
-# from .auth.token import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
-from .db.models.user import User
-from .db.schemas.token import Token
 from .routes.users import router as UserRouter
 from .routes.posts import router as PostRouter
 from .routes.tags import router as TagsRouter
 from .db.db import init_db, get_db
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from .utils.exceptions import CustomException
 from .middleware import ResponseTimeMiddleware
 
 _logger = logging.getLogger(__name__)

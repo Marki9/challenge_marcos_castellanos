@@ -11,7 +11,7 @@ class Post(BaseModel):
 
 class UserBase(BaseModel):
     username: str
-    age: conint(ge=18)  # La edad debe ser un entero mayor o igual a 18
+    age: conint(ge=18)
     email: EmailStr
     password: str
 
