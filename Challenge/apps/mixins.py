@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime
+from sqlalchemy import Column, DateTime, Boolean
 from sqlalchemy.sql import func
 
 class SoftDeleteMixin:
