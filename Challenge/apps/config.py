@@ -1,4 +1,5 @@
 from decouple import config
+import logging
 
 APP_NAME = 'Challenge Apirestfull'
 
@@ -22,3 +23,5 @@ DB_USER = 'postgres'
 DB_PASSWORD = '123qweasd'
 DB_NAME = 'challenge'
 DB_SCHEMA = "apiRestfull"
+
+logger = logging.getLogger("uvicorn.error")

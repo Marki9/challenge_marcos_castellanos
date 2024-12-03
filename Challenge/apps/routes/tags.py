@@ -1,41 +1,48 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from apps.config import logger
 from apps.db.db import get_db
 from apps.db.schemas.tags import TagResponse, TagBase
 from apps.db.models.tags import Tag as TagModel
-from apps.auth.authentication import get_current_user
-from apps.db.models.crud_routines.crud import CRUDBase
-from apps.db.schemas.user import UserBase
+
 
 router = APIRouter()
 
 
-
 @router.get("/Tags/", response_model=TagResponse)
-async def get_all_tags(current_user: UserBase = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    tag = await db.get(TagModel, tag_id)
-    if tag is None or tag.is_deleted:
-        raise HTTPException(status_code=404, detail="Tag not found")
-    return CRUDBase.get_all(db=db)
+async def get_all_tags( db: AsyncSession = Depends(get_db)):
+    try:
+        user = db.query(TagModel).all()
+        if not user:
+            raise HTTPException(status_code=404, detail="No hay datos que mostrar")
+        return TagResponse.create(data=[user.__dict__], success=True)
+    except Exception as e:
+        logger.error(f"Error al mostrar el usuario: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al hacer la consulta:{e}")
+
 
 @router.get("/Tags/{tag_id}", response_model=TagResponse)
-async def get_tag(tag_id: int, current_user: UserBase = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    tag_id = await db.get(TagModel, tag_id)
+async def get_tag(tag_id: int, db: AsyncSession = Depends(get_db)):
+    tag = await db.get(TagModel, tag_id)
     if tag is None or tag.is_deleted:
         raise HTTPException(status_code=404, detail="User not found")
-    return CRUDBase.get(id=tag_id, db=db)
+    return tag
+
 
 @router.post("/tags/", response_model=TagResponse)
-async def create_tag(tag: TagBase, current_user: UserBase = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def create_tag(tag: TagBase, db: AsyncSession = Depends(get_db)):
 
-    return CRUDBase.create(db=db, obj_in=tag)
+    pass
+
 
 @router.put("/tags/{tag_id}", response_model=TagResponse)
-async def update_tag(tag:TagBase, current_user: UserBase = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def update_tag(tag:TagBase,  db: AsyncSession = Depends(get_db)):
 
-    return CRUDBase.update(db=db, obj_in=tag)
+    pass
+
 
 @router.delete("/tag/{tag_id}", response_model=TagResponse)
-async def delete_tag(tag: TagBase, current_user: UserBase = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def delete_tag(tag: TagBase,  db: AsyncSession = Depends(get_db)):
 
-    return CRUDBase.delete(db=db, obj_in=tag)
+    pass

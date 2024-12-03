@@ -1,8 +1,4 @@
 import logging
-from typing import List
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy import MetaData
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -28,14 +24,21 @@ AsyncSessionFactory = sessionmaker(bind=async_engine, expire_on_commit=False, cl
 metadat = MetaData(schema=DB_SCHEMA)
 
 # Crear una clase base para los modelos
-Base = declarative_base(metadata= metadat)
+Base = declarative_base(metadata=metadat)
+
+
 # Base = declarative_base()
 
 
 # Dependencia para obtener la sesión de la base de datos
+async def get_db_Async():
+    async with AsyncSessionFactory() as db:
+        yield db
+
+
 def get_db():
-    db = SessionFactory()
     try:
+        db = SessionFactory()
         yield db
     finally:
         db.close()
@@ -52,21 +55,6 @@ def create_db():
         raise e
 
 
-# def init_db():
-#     try:
-#         create_db()
-
-#         # Create microservice schema
-#         if not engine.dialect.has_schema(engine, DB_SCHEMA):
-#             engine.execute(CreateSchema(DB_SCHEMA))
-
-#         # Creates all the tables in the database
-#         # Will skip already created tables
-#         Base.metadata.create_all(bind=engine)
-#     except Exception as e:
-#         _logger.error(e)
-#         raise e
-
 def init_db():
     try:
         create_db()
@@ -76,9 +64,28 @@ def init_db():
                 _logger.info(f"Intentando crear el esquema: {DB_SCHEMA}")
                 connection.execute(CreateSchema(DB_SCHEMA, if_not_exists=False))
                 connection.commit()
-            
+
         # Crea todas las tablas en la base de datos
         Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        _logger.error(e)
+        raise e
+
+
+async def init_db_Async():
+    try:
+        create_db()
+        # Crear el esquema si no existe
+        async with async_engine.connect() as connection:
+            query = text(f"SELECT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = :schema_name)")
+            exists = await connection.scalar(query, {"schema_name": DB_SCHEMA})
+            if not exists:
+                _logger.info(f"Intentando crear el esquema: {DB_SCHEMA}")
+                await connection.execute(CreateSchema(DB_SCHEMA, if_not_exists=False))
+                await connection.commit()
+        # Crea todas las tablas en la base de datos
+        async with async_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
     except Exception as e:
         _logger.error(e)
         raise e
@@ -98,14 +105,3 @@ def checkConnection():
     except Exception as e:
         _logger.error(e)
         return False
-    
-async def run_migrations_online():
-    connectable = create_async_engine(
-        ASYNC_PG_DATABASE_URL,
-        poolclass=pool.NullPool,
-    )
-
-    async with connectable.connect() as connection:
-        await connection.run_sync(context.configure, target_metadata=target_metadata)
-        await context.run_migrations()    
-

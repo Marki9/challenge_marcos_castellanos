@@ -14,5 +14,5 @@ class PostCreate(PostBase):
 class PostResponse(PostBase):
     tags: List[Tag] = []
 
-    class Config:
+    class ConfigDict:
         orm_mode = True

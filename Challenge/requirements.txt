@@ -10,4 +10,5 @@ python-jose[cryptography]
 pyjwt
 python-decouple
 sqlalchemy_utils
-psycopg2==2.9.9   
+python-multipart
+psycopg2==2.9.9
