@@ -1,49 +1,46 @@
-# import logging
-# from datetime import timedelta
-# from http.client import HTTPException
-# from typing import Union
-#
-# from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-# from passlib.context import CryptContext
-#
-# from apps.config import APP_NAME, URL_PREFIX, allowed_origins, allow_origin_regex
-# from fastapi import FastAPI, Request, status, Depends
-# from fastapi.responses import JSONResponse
-# from fastapi.middleware.cors import CORSMiddleware
-# from starlette.middleware import Middleware
-# from fastapi.openapi.docs import (get_redoc_html, get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html)
-# from fastapi.staticfiles import StaticFiles
-#
-# # from .auth.authentication import authenticate_user
-# from ..auth.token import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
-# from ..db.models.user import User
-# from ..db.schemas.token import Token
-# from ..db.db import init_db, get_db
-# from sqlalchemy.ext.asyncio import AsyncSession
-#
-# _logger = logging.getLogger(__name__)
-#
-# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-#
-# app = FastAPI(title=APP_NAME)
-# # authentication events
-# @app.post("/token")
-# async def login_for_access_token(form_data: Union[OAuth2PasswordRequestForm, Depends()],
-#                                  db: AsyncSession = Depends(get_db)) -> Token:
-#     user = User.authenticate_user(form_data.username, form_data.password)
-#     if not user:
-#         raise HTTPException(status_code=400, detail="Incorrect username or password")
-#     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-#     access_token = create_access_token(
-#         data={"sub": user.username, "scopes": form_data.scopes},
-#         expires_delta=access_token_expires,
-#     )
-#     return Token(access_token=access_token, token_type="bearer")
-#
-#
+import hashlib
+
+import jwt
+from datetime import datetime, timedelta, timezone
+
+from fastapi import HTTPException
+from passlib.context import CryptContext
+
+
+SECRET_KEY = "98092121561"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
 # def verify_password(plain_password, hashed_password):
-#     return pwd_context.verify(plain_password, hashed_password)
-#
-#
-# def get_password_hash(password):
-#     return pwd_context.hash(password)
+#     try:
+#      return pwd_context.verify(plain_password, hashed_password)
+#     except Exception as e:
+#         raise HTTPException(status_code=400, detail=f"No se pudo verificar la contraseña :{e}")
+
+
+def get_password_hash(password: str) -> str:
+    """Genera un hash SHA-256 de la contraseña proporcionada."""
+    # Codificar la contraseña en bytes y calcular el hash
+    return hashlib.sha256(password.encode()).hexdigest()
+
+
+def verify_password( hashed_password: str, password: str) -> bool:
+    """Verifica si la contraseña proporcionada coincide con el hash almacenado."""
+    return hashed_password == get_password_hash(password)
+
+
+def create_access_token(data: dict, expires_delta: timedelta):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+

@@ -3,6 +3,7 @@ import logging
 from apps.config import APP_NAME, URL_PREFIX, allowed_origins, allow_origin_regex
 from fastapi import FastAPI
 
+from .auth.authentication import router as AuthenticationRouter
 from .routes.users import router as UserRouter
 from .routes.posts import router as PostRouter
 from .routes.tags import router as TagsRouter
@@ -23,7 +24,7 @@ app.add_middleware(ResponseTimeMiddleware)
 #     tokenUrl="token",
 #     scopes={"me": "Lee información sobre el usuario actual.", "items": "Leer elementos"},
 # )
-
+app.include_router(AuthenticationRouter)
 app.include_router(UserRouter, prefix=URL_PREFIX + "/Users", tags=["Usurarios"])
 app.include_router(PostRouter, prefix=URL_PREFIX + "/Posts", tags=["Publicaciones"])
 app.include_router(TagsRouter, prefix=URL_PREFIX + "/tags", tags=["Comentarios"])

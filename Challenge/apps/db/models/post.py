@@ -14,7 +14,8 @@ post_tags = Table(
 class Post(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "posts"
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String,)
+    title = Column(String,nullable=False)
+    content = Column(String)
     owner_id = Column(Integer, ForeignKey("users.id"))
     tags = relationship("Tag", secondary=post_tags, back_populates="posts")
     owner = relationship("User", back_populates="posts")

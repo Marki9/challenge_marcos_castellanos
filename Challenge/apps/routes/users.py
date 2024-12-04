@@ -1,8 +1,10 @@
 import hashlib
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
+from apps.auth.auth_handler import get_password_hash
+from apps.auth.authentication import get_current_user
 from apps.config import logger
 from apps.db.db import get_db
 from apps.db.schemas.user import UserResponse, UserBase
@@ -13,7 +15,8 @@ router = APIRouter()
 
 # current_user: UserBase = Depends(get_current_user),
 @router.get("/user/{user_id}", response_model=UserResponse)
-async def get_user(user_id: int, db: Session = Depends(get_db)):
+async def get_user(user_id: int, db: Session = Depends(get_db),
+                   current_user: UserModel = Security(get_current_user, scopes=["me"])):
     try:
         user = db.query(UserModel).filter(UserModel.id == user_id,not UserModel.is_deleted).first()
         if not user:
@@ -25,7 +28,8 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/delete_users/{user_id}", response_model=UserResponse)
-async def get_delete_users(db: Session = Depends(get_db)):
+async def get_delete_users(db: Session = Depends(get_db),
+                           current_user: UserModel = Security(get_current_user, scopes=["me"])):
     try:
         users = db.query(UserModel).filter(UserModel.is_deleted).all()
         if not users:
@@ -38,7 +42,8 @@ async def get_delete_users(db: Session = Depends(get_db)):
 
 
 @router.get("/all_users/{user_id}", response_model=UserResponse, summary='Obtiene todos los usuarios')
-async def get_all_users(db: Session = Depends(get_db)):
+async def get_all_users(db: Session = Depends(get_db),
+                        current_user: UserModel = Security(get_current_user, scopes=["me"])):
     try:
         users = db.query(UserModel).where(UserModel.is_deleted== False).all()
         if not users:
@@ -51,12 +56,14 @@ async def get_all_users(db: Session = Depends(get_db)):
 
 
 @router.post("/users/{user_id}", response_model=UserResponse, summary='Crear un nuevo usuario')
-async def create_user(user: UserBase, db: Session = Depends(get_db)):
+async def create_user(user: UserBase, db: Session = Depends(get_db),
+                      # current_user: UserModel = Security(get_current_user, scopes=["me"])
+                      ):
     try:
         obj = UserModel()
-        obj.password = hashlib.sha256(user.password.encode()).hexdigest()
         for key, value in user.dict().items():
             setattr(obj, key, value)
+        obj.password = get_password_hash(user.password)
         db.add(obj)
         db.commit()
         db.refresh(obj)
@@ -67,7 +74,8 @@ async def create_user(user: UserBase, db: Session = Depends(get_db)):
 
 
 @router.put("/users/{user_id}", response_model=UserResponse, summary='actualizar usuario por su id')
-async def update_user(user_id: int, user: UserBase, db: AsyncSession = Depends(get_db)):
+async def update_user(user_id: int, user: UserBase, db: AsyncSession = Depends(get_db),
+                      current_user: UserModel = Security(get_current_user, scopes=["me"])):
     try:
         # Obtener el usuario a actualizar
         result = db.query(UserModel).filter(UserModel.id == user_id).first()
@@ -90,7 +98,8 @@ async def update_user(user_id: int, user: UserBase, db: AsyncSession = Depends(g
 
 
 @router.delete("/users/{user_id}", response_model=UserResponse, summary='Eliminar usuario por su id')
-async def delete_user(user_id: int, db: Session = Depends(get_db)):
+async def delete_user(user_id: int, db: Session = Depends(get_db),
+                      current_user: UserModel = Security(get_current_user, scopes=["me"])):
     try:
         result = db.query(UserModel).filter(UserModel.id == user_id and (not UserModel.is_deleted)).first()
 

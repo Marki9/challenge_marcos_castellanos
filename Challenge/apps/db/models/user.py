@@ -15,7 +15,3 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
     password = Column(String)
     posts = relationship("Post", back_populates="owner")
 
-    def get_user(self, db: AsyncSession, username: str):
-        if username in db:
-            user_dict = db[username]
-            return User(**user_dict)
