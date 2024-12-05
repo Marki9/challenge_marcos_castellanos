@@ -32,7 +32,7 @@ async def get_all_posts(db: Session = Depends(get_db),
 async def get_post(post_id: int, db: Session = Depends(get_db),
                    current_user: User = Security(get_current_user, scopes=["me"])):
     try:
-        post = db.query(PostModel).filter_by(PostModel.id == post_id, PostModel.is_deleted == False).first()
+        post = db.query(PostModel).filter(PostModel.id == post_id, PostModel.is_deleted == False).first()
         if not post:
             return PostResponse(data=[], success=True, count=0, message='No hay datos que mostrar')
         return PostResponse(data=[post], count=1, success=True, message='Operación exitosa')
@@ -41,7 +41,7 @@ async def get_post(post_id: int, db: Session = Depends(get_db),
         raise HTTPException(status_code=500, detail=f"Error:{e}")
 
 
-@router.post("/posts/", response_model=PostResponse)
+@router.post("/posts/{post_id}", response_model=PostResponse)
 async def create_post(post: PostBase, db: AsyncSession = Depends(get_db),
                       current_user: User = Security(get_current_user, scopes=["me"])):
     try:
@@ -72,7 +72,7 @@ async def update_post(post_id: int, post: PostBase, db: Session = Depends(get_db
             raise HTTPException(status_code=403, detail="ESte usuario no fue el que creó este post")
 
         result.title = post.title
-        result.owner_id = post.owner_id
+        result.owner_id = current_user.id
         if post.tags:
             for row in post.tags:
                 new_tag = Tag(text=row.text)
