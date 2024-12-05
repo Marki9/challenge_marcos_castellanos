@@ -31,28 +31,27 @@ async def get_user(user_id: int, db: Session = Depends(get_db),
 async def get_delete_users(db: Session = Depends(get_db),
                            current_user: UserModel = Security(get_current_user, scopes=["me"])):
     try:
-        users = db.query(UserModel).filter(UserModel.is_deleted).all()
+        users=[]
+        users = db.query(UserModel).filter(UserModel.is_deleted== True).all()
         if not users:
-            return UserResponse.create(data=[], success=True,success_message="No hay datos que mostrar")
-        aux = [a.__dict__ for a in users]
-        return UserResponse.create(data=aux, success=True)
+            return UserResponse(data=[], success=True,cont=0, success_message="No hay datos que mostrar")
+        return UserResponse(data=users,count=len(users), success=True, message='Operación exitosa')
     except Exception as e:
-        logger.error(f"Error al mostrar el usuario: {e}")
-        raise HTTPException(status_code=500, detail=f"Error al hacer la consulta:{e}")
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Error:{e}")
 
 
 @router.get("/all_users/{user_id}", response_model=UserResponse, summary='Obtiene todos los usuarios')
 async def get_all_users(db: Session = Depends(get_db),
                         current_user: UserModel = Security(get_current_user, scopes=["me"])):
     try:
-        users = db.query(UserModel).where(UserModel.is_deleted== False).all()
+        users = db.query(UserModel).where(UserModel.is_deleted == False).all()
         if not users:
-            return UserResponse.create(data=[], success=True,success_message="No hay datos que mostrar")
-        aux= [a.__dict__ for a in users]
-        return UserResponse.create(data=aux, success=True)
+            return UserResponse(data=[], success=True, cont=0,success_message="No hay datos que mostrar")
+        return UserResponse(data=users, count=len(users), success=True, message='Operación exitosa')
     except Exception as e:
-        logger.error(f"Error al mostrar el usuario: {e}")
-        raise HTTPException(status_code=500, detail=f"Error al hacer la consulta:{e}")
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Error:{e}")
 
 
 @router.post("/users/{user_id}", response_model=UserResponse, summary='Crear un nuevo usuario')
@@ -67,34 +66,33 @@ async def create_user(user: UserBase, db: Session = Depends(get_db),
         db.add(obj)
         db.commit()
         db.refresh(obj)
-        return UserResponse.create(data=[obj.__dict__], success=True, success_message='Usuario creado con exito')
+        return UserResponse(data=[obj],count=1, success=True, message='Operación exitosa')
     except Exception as e:
-        logger.error(f"Error al crear el usuario: {e}")
-        return UserResponse.create(data=[], success=False,failure_message=e)
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Error:{e}")
 
 
 @router.put("/users/{user_id}", response_model=UserResponse, summary='actualizar usuario por su id')
 async def update_user(user_id: int, user: UserBase, db: AsyncSession = Depends(get_db),
                       current_user: UserModel = Security(get_current_user, scopes=["me"])):
     try:
-        # Obtener el usuario a actualizar
-        result = db.query(UserModel).filter(UserModel.id == user_id).first()
+        result=[]
+        result = db.query(UserModel).filter(UserModel.id == user_id, UserModel.is_deleted == False).first()
         if result is None:
+            return UserResponse(data=[], success=True, cont=0, success_message="No se encontró registro q coincida con este id")
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
-
-        # Actualizar los campos del usuario
         result.username = user.username
         result.email = user.email
         result.age = user.age
         if user.password:
-            result.password = hashlib.sha256(user.password.encode()).hexdigest()
+            result.password = get_password_hash(password=user.password)
             db.commit()
             db.refresh(result)
 
-        return UserResponse.create(data=[result.__dict__], success=True)
+        return UserResponse(data=[result],count=1, success=True , message='Operación exitosa')
     except Exception as e:
-        logger.error(f"Error al crear el usuario: {e}")
-        raise HTTPException(status_code=500, detail=f"Error al crear el usuario:{e}")
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Error:{e}")
 
 
 @router.delete("/users/{user_id}", response_model=UserResponse, summary='Eliminar usuario por su id')
@@ -102,14 +100,11 @@ async def delete_user(user_id: int, db: Session = Depends(get_db),
                       current_user: UserModel = Security(get_current_user, scopes=["me"])):
     try:
         result = db.query(UserModel).filter(UserModel.id == user_id and (not UserModel.is_deleted)).first()
-
-        if result is None:
-            raise HTTPException(status_code=404, detail="User not found")
-        # Marcar el usuario como eliminado
-        result.is_deleted = True
-        db.commit()
-        db.refresh(result)
-        return UserResponse.create(data=[result.__dict__], success=True)
+        if result:
+            # Marcar el usuario como eliminado
+            db.commit()
+            db.refresh(result)
+        return UserResponse.create(data=[result], success=True,count=1,message='operación exitosa')
     except Exception as e:
-        logger.error(f"Error al eliminar el usuario: {e}")
-        raise HTTPException(status_code=500, detail=f"Error al eliminar el usuario:{e}")
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Error:{e}")
