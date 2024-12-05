@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 # current_user: UserBase = Depends(get_current_user),
-@router.get("/user/{user_id}", response_model=UserResponse)
+@router.get("/user/{user_id}", response_model=UserResponse, summary='Obtener usuario por su id')
 async def get_user(user_id: int, db: Session = Depends(get_db),
                    current_user: UserModel = Security(get_current_user, scopes=["me"])):
     try:
@@ -27,7 +27,7 @@ async def get_user(user_id: int, db: Session = Depends(get_db),
         raise HTTPException(status_code=500, detail=f"Error al hacer la consulta:{e}")
 
 
-@router.get("/delete_users/{user_id}", response_model=UserResponse)
+@router.get("/delete_users/{user_id}", response_model=UserResponse,summary='Histórico de usuarios eliminados')
 async def get_delete_users(db: Session = Depends(get_db),
                            current_user: UserModel = Security(get_current_user, scopes=["me"])):
     try:

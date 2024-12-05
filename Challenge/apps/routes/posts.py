@@ -69,7 +69,7 @@ async def update_post(post_id: int, post: PostBase, db: Session = Depends(get_db
         if result is None:
             return PostResponse(data=[], success=False, count=0, message='No se encontró ningun registro con ese id')
         if current_user.id != result.owner_id:
-            raise HTTPException(status_code=401, detail="ESte usuario no fue el que creó este post")
+            raise HTTPException(status_code=403, detail="ESte usuario no fue el que creó este post")
 
         result.title = post.title
         result.owner_id = post.owner_id
@@ -96,7 +96,7 @@ async def delete_post(post_id, db: Session = Depends(get_db),
         if result is None:
             return PostResponse(data=[], success=False, count=0, message='No se encontró ningun registro con ese id')
         if current_user.id != result.owner_id:
-            raise HTTPException(status_code=401, detail="ESte usuario no fue el que creó este post")
+            raise HTTPException(status_code=403, detail="ESte usuario no fue el que creó este post")
 
         result.is_deleted = True
         db.commit()
