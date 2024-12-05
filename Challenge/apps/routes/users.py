@@ -18,13 +18,13 @@ router = APIRouter()
 async def get_user(user_id: int, db: Session = Depends(get_db),
                    current_user: UserModel = Security(get_current_user, scopes=["me"])):
     try:
-        user = db.query(UserModel).filter(UserModel.id == user_id,not UserModel.is_deleted).first()
+        user = db.query(UserModel).filter(UserModel.id == user_id, UserModel.is_deleted==False).first()
         if not user:
-            return UserResponse.create(data=[], success=True,success_message="No hay datos que mostrar")
-        return UserResponse.create(data=[user.__dict__], success=True)
+            return UserResponse(data=[], count=0, success=True, message="No hay datos que mostrar")
+        return UserResponse(data=[user], count=1, success=True, message="Operación exitosa")
     except Exception as e:
-        logger.error(f"Error al mostrar el usuario: {e}")
-        raise HTTPException(status_code=500, detail=f"Error al hacer la consulta:{e}")
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Error:{e}")
 
 
 @router.get("/delete_users/{user_id}", response_model=UserResponse,summary='Histórico de usuarios eliminados')
@@ -80,7 +80,7 @@ async def update_user(user_id: int, user: UserBase, db: AsyncSession = Depends(g
         result = db.query(UserModel).filter(UserModel.id == user_id, UserModel.is_deleted == False).first()
         if result is None:
             return UserResponse(data=[], success=True, cont=0, success_message="No se encontró registro q coincida con este id")
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
         result.username = user.username
         result.email = user.email
         result.age = user.age
@@ -89,7 +89,7 @@ async def update_user(user_id: int, user: UserBase, db: AsyncSession = Depends(g
             db.commit()
             db.refresh(result)
 
-        return UserResponse(data=[result],count=1, success=True , message='Operación exitosa')
+        return UserResponse(data=[result], count=1, success=True , message='Operación exitosa')
     except Exception as e:
         logger.error(f"Error: {e}")
         raise HTTPException(status_code=500, detail=f"Error:{e}")
@@ -101,10 +101,10 @@ async def delete_user(user_id: int, db: Session = Depends(get_db),
     try:
         result = db.query(UserModel).filter(UserModel.id == user_id and (not UserModel.is_deleted)).first()
         if result:
-            # Marcar el usuario como eliminado
+            result.is_deleted=True
             db.commit()
             db.refresh(result)
-        return UserResponse.create(data=[result], success=True,count=1,message='operación exitosa')
+        return UserResponse(data=[result], success=True,count=1,message='operación exitosa')
     except Exception as e:
         logger.error(f"Error: {e}")
         raise HTTPException(status_code=500, detail=f"Error:{e}")
