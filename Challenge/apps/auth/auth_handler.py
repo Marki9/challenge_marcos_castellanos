@@ -14,13 +14,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-# def verify_password(plain_password, hashed_password):
-#     try:
-#      return pwd_context.verify(plain_password, hashed_password)
-#     except Exception as e:
-#         raise HTTPException(status_code=400, detail=f"No se pudo verificar la contraseña :{e}")
-
-
 def get_password_hash(password: str) -> str:
     """Genera un hash SHA-256 de la contraseña proporcionada."""
     # Codificar la contraseña en bytes y calcular el hash

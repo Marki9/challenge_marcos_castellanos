@@ -19,7 +19,7 @@ from apps.db.models.user import User as UserM
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="token",
-    scopes={"me": "Read information about the current user.", "items": "Read items."},
+    scopes={"me": "Leer información del usuario.", "items": "Read items."},
 )
 
 router= APIRouter()
@@ -50,7 +50,7 @@ async def get_current_user(
         authenticate_value = "Bearer"
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="No se pueden validar sus credenciales",
         headers={"WWW-Authenticate": authenticate_value},
     )
     try:
@@ -69,7 +69,7 @@ async def get_current_user(
         if scope not in token_data.scopes:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Not enough permissions",
+                detail="No tiene permisos suficientes",
                 headers={"WWW-Authenticate": authenticate_value},
             )
     return user
@@ -78,19 +78,18 @@ async def get_current_user(
 async def get_current_active_user(
         current_user: User = Security(get_current_user, scopes=["me"]),
 ):
-    # if current_user.disabled:
-    #     raise HTTPException(status_code=400, detail="Inactive user")
+
     return current_user
 
 
-@router.post("/token")
+@router.post("/token",include_in_schema=False)
 async def login_for_access_token(
         form_data: OAuth2PasswordRequestForm = Depends(),
         db: Session = Depends(get_db)
 ) -> Token:
     user = authenticate_user(db=db, username=form_data.username, password=form_data.password)
     if not user:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
+        raise HTTPException(status_code=400, detail="Usuario o contraseña incorrecta")
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.username, "scopes": form_data.scopes},
@@ -99,11 +98,11 @@ async def login_for_access_token(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.get("/users/me/", response_model=UserResponse)
+@router.get("/users/me/", response_model=UserResponse,include_in_schema=False)
 async def read_users_me(
         current_user: User = Depends(get_current_active_user)):
-    a=[current_user.__dict__]
+    a=[current_user]
 
-    return UserResponse(a,True)
+    return UserResponse(a, True, 1, '')
 
 

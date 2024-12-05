@@ -8,14 +8,6 @@ PORT = 8070#config('PORT', cast=int)
 
 URL_PREFIX = '/challenge'
 
-allowed_origins = [
-    f"http://{HOST}",
-    f"http://{HOST}:{PORT}",
-   
-]
-
-allow_origin_regex = ".*" #config('allow_origin_regex')
-
 # DB
 DB_HOST = 'localhost'
 DB_PORT = 5432
