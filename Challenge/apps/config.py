@@ -1,4 +1,5 @@
 from decouple import config
+import logging
 
 APP_NAME = 'Challenge Apirestfull'
 
@@ -7,14 +8,6 @@ PORT = 8070#config('PORT', cast=int)
 
 URL_PREFIX = '/challenge'
 
-allowed_origins = [
-    f"http://{HOST}",
-    f"http://{HOST}:{PORT}",
-   
-]
-
-allow_origin_regex = ".*" #config('allow_origin_regex')
-
 # DB
 DB_HOST = 'localhost'
 DB_PORT = 5432
@@ -22,3 +15,5 @@ DB_USER = 'postgres'
 DB_PASSWORD = '123qweasd'
 DB_NAME = 'challenge'
 DB_SCHEMA = "apiRestfull"
+
+logger = logging.getLogger("uvicorn.error")

@@ -1,19 +1,32 @@
-from pydantic import BaseModel,EmailStr,conint
+from pydantic import Field, ConfigDict, BaseModel, EmailStr
 from typing import List, Optional
+
+from apps.db.schemas.customResponse import CustomResponse
+from typing_extensions import Annotated
+
+
+class Post(BaseModel):
+    title: str
+    content: str
+    model_config = ConfigDict(from_attributes=True)
+
 
 class UserBase(BaseModel):
     username: str
-    age:conint(ge=18)  # La edad debe ser un entero mayor o igual a 18
+    age: Annotated[int, Field(ge=18)]
     email: EmailStr
+    password: str
+
 
 class UserCreate(UserBase):
     pass
 
-class User(UserBase):
-    posts: List["Post"] = []
-    
-class UserResponse(UserBase):
-    List[UserBase]    
 
-    class Config:
-        orm_mode = True
+class User(UserBase):
+    id:int
+    posts: List["Post"] = []
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserResponse(CustomResponse):
+    data: Optional[List[User]] = None

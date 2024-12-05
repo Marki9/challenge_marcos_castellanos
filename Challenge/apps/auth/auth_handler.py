@@ -1,53 +1,39 @@
-import time
-from typing import Dict
-#import jwt
-from fastapi import HTTPException, status
+import hashlib
+
+import jwt
+from datetime import datetime, timedelta, timezone
+
+from fastapi import HTTPException
 from passlib.context import CryptContext
-# from apps.config import JWT_SECRET, JWT_ALGORITHM
 
 
-#
-def token_response(token: str):
-    token_data = decodeJWT(token)
-    return {
-        'message': 'Hello, %s' % token_data['user_id'],
-        'error': False,
-        'data': {
-            "access_token": token
-        }
-    }
+SECRET_KEY = "98092121561"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-
-def signJWT(user_id: str) -> Dict[str, str]:
-    payload = {
-        "user_id": user_id,
-        "expires": time.time() + 600
-    }
-    token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
-    return token_response(token)
-
-
-def decodeJWT(token: str) -> dict:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        decoded_token = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return decoded_token if decoded_token["expires"] >= time.time() else None
-    except:
-        raise credentials_exception
-
-
-#
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+def get_password_hash(password: str) -> str:
+    """Genera un hash SHA-256 de la contraseña proporcionada."""
+    # Codificar la contraseña en bytes y calcular el hash
+    return hashlib.sha256(password.encode()).hexdigest()
 
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
+def verify_password( hashed_password: str, password: str) -> bool:
+    """Verifica si la contraseña proporcionada coincide con el hash almacenado."""
+    return hashed_password == get_password_hash(password)
+
+
+def create_access_token(data: dict, expires_delta: timedelta):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+

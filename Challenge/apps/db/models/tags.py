@@ -1,17 +1,11 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Table
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.database import Base
-from app.mixins import SoftDeleteMixin, TimestampMixin
+from apps.db.db import Base
+from .post import post_tags
+from ...mixins import SoftDeleteMixin, TimestampMixin
 
-post_tags = Table(
-    "post_tags",
-    Base.metadata,
-    Column("post_id", Integer, ForeignKey("posts.id")),
-    Column("tag_id", Integer, ForeignKey("tags.id")),
-)
 
-class Tag(Base):
+class Tag(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "tags"
     id = Column(Integer, primary_key=True, index=True)
     text = Column(String, unique=True)
