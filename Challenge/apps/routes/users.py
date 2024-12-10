@@ -101,9 +101,7 @@ async def delete_user(user_id: int, db: Session = Depends(get_db),
     try:
         result = db.query(UserModel).filter(UserModel.id == user_id and (not UserModel.is_deleted)).first()
         if result:
-            result.is_deleted=True
-            db.commit()
-            db.refresh(result)
+            result.delete(db)
         return UserResponse(data=[result], success=True,count=1,message='operación exitosa')
     except Exception as e:
         logger.error(f"Error: {e}")
