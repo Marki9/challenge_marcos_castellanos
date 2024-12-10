@@ -109,9 +109,7 @@ async def delete_tag(tag_id: int, db: Session = Depends(get_db)):
         if result is None:
             return TagResponse(data=[], success=False, count=0, message='No se encontró el registro con ese id')
 
-        result.is_deleted = True
-        db.commit()
-        db.refresh(result)
+        result.delete(db)
         return TagResponse(data=[result], success=True, count=1, message='operación exitosa')
     except Exception as e:
         logger.error(f"Error : {e}")
