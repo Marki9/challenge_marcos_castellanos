@@ -98,9 +98,7 @@ async def delete_post(post_id, db: Session = Depends(get_db),
         if current_user.id != result.owner_id:
             raise HTTPException(status_code=403, detail="ESte usuario no fue el que creó este post")
 
-        result.is_deleted = True
-        db.commit()
-        db.refresh(result)
+        result.delete(db)
         return PostResponse(data=[result], success=True, count=1, message='Operación exitosa')
     except Exception as e:
         logger.error(f"Error: {e}")
